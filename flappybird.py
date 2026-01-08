@@ -47,6 +47,8 @@ pipes = []
 velocity_x = -2
 velocity_y = 0
 gravity = 0.4
+score = 0
+game_over = False
 
 def draw():
     window.blit(background_image, (0, 0))
@@ -55,14 +57,24 @@ def draw():
     for pipe in pipes:
         window.blit(pipe.img, pipe)
 
+    text = str(int(score))
+
+    text_font = pygame.font.SysFont("Comic Sans MS", 45)
+    text_render = text_font.render(text, True, "white")
+    window.blit(text_render, (5, 0))
+
 def move():
-    global velocity_y
+    global velocity_y, score
     velocity_y += gravity
     bird.y += velocity_y
     bird.y = max(bird.y, 0)  # prevent bird from going above the screen
     
     for pipe in pipes:
         pipe.x += velocity_x
+
+        if not pipe.passed and bird.x > pipe.x + pipe.width:
+            score += 0.5
+            pipe.passed = True
 
         while len(pipes) > 0 and pipes[0].right < 0:
             pipes.pop(0)
