@@ -1,5 +1,6 @@
 import pygame
 from sys import exit
+import random
 
 GAME_WIDTH = 360
 GAME_HEIGHT = 640
@@ -43,6 +44,7 @@ bottom_pipe_image = pygame.transform.scale(bottom_pipe_image, (pipe_width, pipe_
 # game Logic
 bird = Bird(bird_image)
 pipes = []
+velocity_x = -2
 
 def draw():
     window.blit(background_image, (0, 0))
@@ -51,16 +53,28 @@ def draw():
     for pipe in pipes:
         window.blit(pipe.img, pipe)
 
+def move():
+    for pipe in pipes:
+        pipe.x += velocity_x
+
 
 def create_pipes():
+    random_pipe_y = pipe_y - pipe_height/4 - random.random()*(pipe_height/2)
+    opening_space = GAME_HEIGHT/4
+
     top_pipe = Pipe(top_pipe_image)
+    top_pipe.y = random_pipe_y
     pipes.append(top_pipe)
 
-    print(len(pipes))
+    bottom_pipe = Pipe(bottom_pipe_image)
+    bottom_pipe.y = top_pipe.y + top_pipe.height + opening_space
+    pipes.append(bottom_pipe)
+
+    print(len(pipes)) 
 
 pygame.init()
 window = pygame.display.set_mode((GAME_WIDTH, GAME_HEIGHT))
-pygame.display.set_caption("Flappy Bird")
+pygame.display.set_caption("Flappy Bird") 
 clock = pygame.time.Clock()
 
 create_pipes_timer = pygame.USEREVENT + 0
@@ -76,6 +90,7 @@ while True:
         if event.type == create_pipes_timer:   
             create_pipes()
 
+    move()
     draw()
     pygame.display.update()
     clock.tick(60) # 60 fps? Not an AI comment, I'm just learning, ok
