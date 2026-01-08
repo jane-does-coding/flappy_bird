@@ -45,6 +45,8 @@ bottom_pipe_image = pygame.transform.scale(bottom_pipe_image, (pipe_width, pipe_
 bird = Bird(bird_image)
 pipes = []
 velocity_x = -2
+velocity_y = 0
+gravity = 0.4
 
 def draw():
     window.blit(background_image, (0, 0))
@@ -54,8 +56,16 @@ def draw():
         window.blit(pipe.img, pipe)
 
 def move():
+    global velocity_y
+    velocity_y += gravity
+    bird.y += velocity_y
+    bird.y = max(bird.y, 0)  # prevent bird from going above the screen
+    
     for pipe in pipes:
         pipe.x += velocity_x
+
+        while len(pipes) > 0 and pipes[0].right < 0:
+            pipes.pop(0)
 
 
 def create_pipes():
@@ -89,6 +99,10 @@ while True:
 
         if event.type == create_pipes_timer:   
             create_pipes()
+
+        if event.type == pygame.KEYDOWN:
+            if event.key in (pygame.K_SPACE, pygame.K_UP, pygame.K_x):
+                velocity_y = -6
 
     move()
     draw()
