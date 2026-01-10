@@ -29,12 +29,12 @@ class Pipe(pygame.Rect):
         self.passed = False
 
 #images
-background_image = pygame.image.load("flappybirdbg.png")
+background_image = pygame.image.load("bg3.png") # temp bg
 bird_image = pygame.image.load("flappybird.png")
 bird_image = pygame.transform.scale(bird_image, (bird_width, bird_height))
-top_pipe_image = pygame.image.load("toppipe.png")
+top_pipe_image = pygame.image.load("pipe.jpg") # temp pipe
 top_pipe_image = pygame.transform.scale(top_pipe_image, (pipe_width, pipe_height))
-bottom_pipe_image = pygame.image.load("bottompipe.png")
+bottom_pipe_image = pygame.image.load("pipe2.jpg") # temp pipe
 bottom_pipe_image = pygame.transform.scale(bottom_pipe_image, (pipe_width, pipe_height))
 
 #game logic
