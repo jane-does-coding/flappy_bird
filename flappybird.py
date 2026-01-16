@@ -5,7 +5,6 @@ import random
 GAME_WIDTH = 360
 GAME_HEIGHT = 640
 
-#bird 
 bird_x = GAME_WIDTH/8
 bird_y = GAME_HEIGHT/2
 bird_width = 34
@@ -16,7 +15,6 @@ class Bird(pygame.Rect):
         pygame.Rect.__init__(self, bird_x, bird_y, bird_width, bird_height)
         self.img = img
 
-#pipe
 pipe_x = GAME_WIDTH
 pipe_y = 0
 pipe_width = 64
@@ -38,17 +36,24 @@ bottom_pipe_image = pygame.image.load("bottompipe.png")
 bottom_pipe_image = pygame.transform.scale(bottom_pipe_image, (pipe_width, pipe_height))
 apple_image = pygame.image.load("apple.png")
 apple_image = pygame.transform.scale(apple_image, (30, 30))
+curse_apple_image = pygame.image.load("cursed_apple.png")
+curse_apple_image = pygame.transform.scale(curse_apple_image, (30, 30))
 
 # power ups
 powerups = []
 invincible = False
 invincible_start = 0
-invincible_duration = 3000 
+invincible_duration = 3000
+
+curse_active = False
+curse_start = 0
+curse_duration = 5000
 
 class PowerUp(pygame.Rect):
-    def __init__(self, img, x, y):
+    def __init__(self, img, x, y, type="good"):
         pygame.Rect.__init__(self, x, y, 30, 30)
         self.img = img
+        self.type = type  # "blessing" or "curse"
 
 #game logic
 bird = Bird(bird_image)
@@ -76,6 +81,7 @@ def draw():
     for powerup in powerups:
         window.blit(powerup.img, powerup)
 
+    # Score
     text_font = pygame.font.SysFont("Comic Sans MS", 45)
     text_render = text_font.render(str(int(score)), True, "white")
     window.blit(text_render, (5, 0))
@@ -89,9 +95,24 @@ def draw():
         timer_rect = timer_render.get_rect(topright=(GAME_WIDTH - 5, 5))
         window.blit(timer_render, timer_rect)
 
+    # Curse overlay
+    if curse_active:
+        screen_copy = window.copy()
+
+        small = pygame.transform.smoothscale(screen_copy, (GAME_WIDTH//10, GAME_HEIGHT//10))
+        blurry = pygame.transform.smoothscale(small, (GAME_WIDTH, GAME_HEIGHT))
+
+        gray_overlay = pygame.Surface((GAME_WIDTH, GAME_HEIGHT))
+        gray_overlay.fill((128,128,128))
+        gray_overlay.set_alpha(60)
+        blurry.blit(gray_overlay, (0,0))
+
+        window.blit(blurry, (0,0))
+
 
 def move():
     global velocity_y, score, game_over, invincible, invincible_start
+    global curse_active, curse_start
 
     velocity_y += gravity
     bird.y += velocity_y
@@ -117,23 +138,26 @@ def move():
         powerup.x += velocity_x
 
         if bird.colliderect(powerup):
-            invincible = True
-            invincible_start = pygame.time.get_ticks()
+            if powerup.type == "good":
+                invincible = True
+                invincible_start = pygame.time.get_ticks()
+            elif powerup.type == "curse":
+                curse_active = True
+                curse_start = pygame.time.get_ticks()
             powerups.remove(powerup)
 
-    # remove off-screen pipes
     while len(pipes) > 0 and pipes[0].x < -pipe_width:
         pipes.pop(0)
 
-    # remove off-screen powerups
     for powerup in powerups[:]:
         if powerup.x < -50:
             powerups.remove(powerup)
 
-    # turn off invincibility after 5 s
-    if invincible:
-        if pygame.time.get_ticks() - invincible_start > invincible_duration:
-            invincible = False
+    # timers
+    if invincible and pygame.time.get_ticks() - invincible_start > invincible_duration:
+        invincible = False
+    if curse_active and pygame.time.get_ticks() - curse_start > curse_duration:
+        curse_active = False
 
 def create_pipes():
     random_pipe_y = pipe_y - pipe_height/4 - random.random()*(pipe_height/2)
@@ -148,9 +172,14 @@ def create_pipes():
     pipes.append(bottom_pipe)
 
     if random.random() < 0.3:
-        apple_x = pipe_x + pipe_width + 10
-        apple_y = top_pipe.y + top_pipe.height + opening_space / 2
-        powerups.append(PowerUp(apple_image, apple_x, apple_y))
+        # 40% chance good or curse
+        if random.random() < 0.4:
+            powerups.append(PowerUp(apple_image, pipe_x + pipe_width + 10,
+                                    top_pipe.y + top_pipe.height + opening_space / 2, type="good"))
+        else:
+            powerups.append(PowerUp(curse_apple_image, pipe_x + pipe_width + 10,
+                                    top_pipe.y + top_pipe.height + opening_space / 2, type="curse"))
+
 
     print(len(pipes))
 
@@ -179,8 +208,11 @@ while True:
                 if game_over:
                     bird.y = bird_y
                     pipes.clear()
+                    powerups.clear()
                     score = 0
                     game_over = False
+                    invincible = False
+                    curse_active = False
     
     if not game_over:
         move()
